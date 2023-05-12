@@ -1,20 +1,52 @@
 document.querySelector('#salvar').addEventListener("click", cadastrar)
 
+let tarefas = []
+
+window.addEventListener("load", () => {
+  tarefas = JSON.parse(localStorage.getItem("tarefas")) || []
+  atualizar()
+})
+
+document.querySelector("#busca").addEventListener("keyup", ()=>{
+  let busca = document.querySelector("#busca").value
+  let tarefasFiltradas = tarefas.filter((tarefa) => {
+    return tarefa.titulo.toLowerCase().includes(busca.toLowerCase())
+  })
+  filtrar(tarefasFiltradas)
+})
+
+function filtrar(tarefas){
+  document.querySelector("#card").innerHTML = ""
+  tarefas.forEach((tarefa)=>{
+    document.querySelector("#card").innerHTML += criaCard(tarefa)
+  })
+}
+
+function atualizar(){
+  localStorage.setItem("tarefas", JSON.stringify(tarefas))
+  document.querySelector("#card").innerHTML = ""
+  tarefas.forEach((tarefa)=>{
+    document.querySelector("#card").innerHTML += criaCard(tarefa)
+  })
+}
+
 function cadastrar() {
   const titulo = document.querySelector("#titulo").value
   const descricao = document.querySelector("#descricao").value
   const categoria = document.querySelector("#categoria").value
   const modal = bootstrap.Modal.getInstance(document.querySelector("#exampleModal"))
   const tarefa = {
+    id: Date.now(),
     titulo,
     descricao,
-
-    categoria
+    categoria,
+    concluida: false
   }
-  console.log(tarefa.descricao)
   if(!validar(tarefa.titulo, document.querySelector("#titulo"))) return
   if(!validar(tarefa.descricao, document.querySelector("#descricao"))) return
-  document.querySelector("#card").innerHTML += criaCard(tarefa)
+  
+  tarefas.push(tarefa)
+  atualizar()
   modal.hide()
 }
 function validar(valor, campo){
@@ -28,8 +60,18 @@ function validar(valor, campo){
   return true
   
 }
-function apagar(botao){
-  botao.parentNode.parentNode.parentNode.remove()
+function conluir(id){
+let tarefaEncontrada = tarefas.find((tarefa) => {
+  return tarefa.id == id
+})
+tarefaEncontrada.concluida = true
+  atualizar()
+}
+function apagar(id){
+  tarefas = tarefas.filter((tarefa) => {
+    return tarefa.id != id
+  })
+  atualizar()
 }
 function criaCard(tarefa) {
   return `
@@ -39,10 +81,10 @@ function criaCard(tarefa) {
             <div class="card-body">
               <p class="card-text">${tarefa.descricao}</p>
               <p><span class="badge text-bg-danger">${tarefa.categoria}</span></p>
-              <a href="#" class="btn btn-success" title="Marcar como Concluida"
+              <a onClick="conluir(${tarefa.id})" href="#" class="btn btn-success ${tarefa.concluida ? "disabled" : ""}" title="Marcar como Concluida"
                 ><i class="bi bi-check-circle"></i>
               </a>
-              <a onClick="apagar(this)" href="#" class="btn btn-danger" title="Apagar Tarefa"
+              <a onClick="apagar(${tarefa.id})" href="#" class="btn btn-danger" title="Apagar Tarefa"
                 ><i class="bi bi-x-circle"></i>
               </a>
             </div>
